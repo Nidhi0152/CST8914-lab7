@@ -3,9 +3,10 @@
     <head>
         <title>Form validation with messages on top: Code example - Accessibility Developer Guide example</title>
         <meta charset="utf-8">
-        <style>.control, fieldset {
-      margin: 6px 0;
-    }
+        <style>
+    .control, fieldset {
+         margin: 6px 0;
+       }
     
     label {
       display: inline-block;
@@ -23,30 +24,83 @@
     
     fieldset ul {
       margin: 0;
-    }</style>
+    }
+
+    .instructions {
+     font-size: 0.9em;
+     color: #555;
+    }
+    </style>
     </head>
     <body>
         <h1>Feedback form</h1>
     <form>
+       <!-- Errors container fors error announcements -->
+       <fieldset class="errors" aria-live="polite">
+           <legend>Errors</legend>
+           <ul></ul>
+      </fieldset>
+
         <div class="control">
-          <label>Full name <span class="required">*</span></label><input id="name" name="name" type="text" />
+          <!-- <label>Full name <span class="required">*</span></label><input id="name" name="name" type="text" /> -->
+
+         <!-- Added 'for' attribute to associate label with input -->
+         <label for="name">Full Name <span class="required">*</span></label>
+
+         <!-- Added 'aria-required' to indicate this is a required field -->
+          <!-- Added 'aria-describedby' to associate instructions with the input -->
+         <input id="name" name="name" type="text" aria-required="true" aria-describedby="name_instructions"/>
+         <span class="instructions" id="name_instructions">Please enter your full name.</span>
         </div>
+
         <div class="control">
-          <label>Biography</label><textarea id="biography" name="biography" type="text"></textarea>
-          <span>Include examples on your skills in JavaScript.</span>
+          <!-- <label>Biography</label><textarea id="biography" name="biography" type="text"></textarea> -->
+
+           <!-- Added 'for' attribute to associate label with textarea -->
+           <label for="biography">Biography <span class="required">*</span></label>
+            <!-- Added 'aria-describedby' to associate instructions with the textarea -->
+            <!-- Added 'aria-required' to indicate this is a required field -->
+           <textarea id="biography" name="biography" aria-required="true" aria-describedby="biography_instructions"></textarea>
+
+            <!-- <span>Include examples on your skills in JavaScript.</span> -->
+            <span class="instructions" id="biography_instructions">Include examples of your skills in JavaScript.</span>
+          
         </div>
         
-          <div>Gender</div>
+          <!-- <div>Gender</div>
           <div class="control">
             <input id="gender_male" name="gender" type="radio" value="male" /><label>Male</label>
           </div>
           <div class="control">
             <input id="gender_female" name="gender" type="radio" value="female" /><label>Female</label>
-          </div>
+          </div> -->
+
+          <!-- added fieldset for grouping -->
+          <fieldset> 
+            <legend>Gender <span class="required">*</span></legend>
+            <div class="control">
+                <!-- Added 'aria-required' to indicate this is a required field -->
+                <input id="gender_male" name="gender" type="radio" value="male" aria-required="true" />
+                <!-- Added 'for' attribute to associate label with input -->
+                <label for="gender_male">Male</label>
+            </div>
+            <div class="control">
+                <!-- Added 'aria-required' to indicate this is a required field -->
+                <input id="gender_female" name="gender" type="radio" value="female" aria-required="true" />
+                <!-- Added 'for' attribute to associate label with input -->
+                <label for="gender_female">Female</label>
+            </div>
+        </fieldset> 
         
         <div class="control">
-          <input id="accept_agbs" name="accept_agbs" type="checkbox" value="1" /><label>I accept the terms and conditions</label>
+          <!-- <input id="accept_agbs" name="accept_agbs" type="checkbox" value="1" /><label>I accept the terms and conditions</label> -->
+
+          <!-- Added 'aria-required' to show required field -->
+          <input id="accept_agbs" name="accept_agbs" type="checkbox" value="1" aria-required="true" />
+           <!-- Added 'for' attribute to associate label with input -->
+           <label for="accept_agbs">I accept the terms and conditions <span class="required">*</span></label>
         </div>
+
         <div class="control">
           <input name="validate" type="hidden" value="1" /><input type="submit" value="Register" />
         </div>
@@ -76,7 +130,10 @@
       
           if ((value = $.urlParam(input)) === null) {
             if ($('fieldset.errors').length === 0) {
-              $('form').prepend('<fieldset class="errors"><legend>Errors</legend><ul></ul></fieldset>');
+              //$('form').prepend('<fieldset class="errors"><legend>Errors</legend><ul></ul></fieldset>');
+
+              //added tabindex="-1" as next focus moves to the errors area for screenreaders
+              $('form').prepend('<fieldset class="errors" tabindex="-1"><legend>Errors</legend><ul></ul></fieldset>');
             }
       
             $referencedElement = null;
@@ -92,7 +149,11 @@
               $referencedElement = $input;
             }
       // R.G. hint: fix next line ;)
-            $error = $('<a>' + message + '</a>');
+            //$error = $('<a>' + message + '</a>');
+
+          // Create error link and associate it with the input field
+             $error = $('<a href="#' + $referencedElement.attr('id') + '">' + message + '</a>');
+
             $error.click(function (e) {
               // If we rely on the link's href pointing to the input's ID, it doesn't trigger forms mode in screen readers
               $referencedElement.focus();
@@ -103,7 +164,8 @@
       
             if ($(':not(form):focus').length === 0) {
               // See https://stackoverflow.com/questions/46134247/jquery-setting-focus-doesnt-work-in-ie11/
-            
+
+              $('fieldset.errors').focus();// Focus on the errors container if no other element is focused
             }
           } else {
             if ($input.is(':checkbox')) {
@@ -125,8 +187,18 @@
             validateInput('gender', 'Please tell us your gender!');
             validateInput('accept_agbs', 'You must accept our terms and conditions!');
       
-            if ($('.error').length === 0) {
+            // if ($('.error').length === 0) {
+            //   return alert('All inputs are valid.');
+            // }
+            /*Alert All inputs are valid appears only when form is filled. 
+             Alert 'All inputs are not valid.' if any field is empty & Focus on the errors container if there are errors*/
+              if ($('fieldset.errors ul li').length === 0) {
               return alert('All inputs are valid.');
+            }
+            else{
+               
+               return alert('All inputs are not valid.');
+               $('fieldset.errors').focus();
             }
           }
         });
